@@ -497,6 +497,15 @@
     pre.innerHTML = render(scene, 0, cols, rows, hearts, cellAspect);
     setInterval(step, frameMs);
 
+    // Re-measure once the web font (Handjet) is actually loaded so the
+    // character-cell aspect is correct and the art isn't distorted.
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load('16px "Handjet"').then(function () {
+        measure();
+        pre.innerHTML = render(scene, t, cols, rows, hearts, cellAspect);
+      });
+    }
+
     let resizeTimer = null;
     window.addEventListener("resize", function () {
       clearTimeout(resizeTimer);
