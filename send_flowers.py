@@ -22,7 +22,6 @@ CONFIG_FILE = "/root/flowers-for-you/config.env"
 SESSION = "/root/flowers-for-you/flowers.session"
 STATE = "/root/flowers-for-you/login_state.json"
 
-URL = "https://flowers.example.com"
 GREETING = "Bon dia 🖤"
 
 
@@ -47,6 +46,7 @@ def client():
 
 async def main():
     load_config()
+    url = os.environ.get("TG_URL", "")
     cmd = sys.argv[1] if len(sys.argv) > 1 else "send"
     c = client()
     await c.connect()
@@ -75,12 +75,12 @@ async def main():
                 print("RECIPIENT_OK", getattr(ent, "first_name", ""))
             except Exception as e:
                 print("RECIPIENT_UNRESOLVED", type(e).__name__, str(e)[:120])
-            print("WOULD_SEND:", repr(GREETING + "\n" + URL))
+            print("WOULD_SEND:", repr(GREETING + "\n" + url))
         else:
             if not await c.is_user_authorized():
                 print("NOT_AUTHORIZED")
                 return
-            text = GREETING + "\n" + URL
+            text = GREETING + "\n" + url
             await c.send_message(os.environ["TG_RECIPIENT"], text)
             print("SENT")
     finally:
