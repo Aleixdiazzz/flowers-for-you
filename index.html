@@ -79,21 +79,7 @@
       letter-spacing: 0.08em;
       color: var(--ink-soft);
     }
-    button#refresh {
-      margin: 14px 0 6px;
-      padding: 11px 26px;
-      font-size: 14px;
-      letter-spacing: 0.06em;
-      color: #2a1020;
-      background: linear-gradient(135deg, #f0a6c8, #e56ba3);
-      border: none;
-      border-radius: 999px;
-      cursor: pointer;
-      box-shadow: 0 6px 22px rgba(229, 107, 163, 0.35);
-      transition: transform 0.12s ease, box-shadow 0.12s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    button#refresh:active { transform: scale(0.96); box-shadow: 0 3px 12px rgba(229, 107, 163, 0.3); }
+    #cell-measure { position: absolute; left: -9999px; top: 0; white-space: pre; }
     footer {
       margin-top: auto;
       padding-top: 18px;
@@ -107,15 +93,15 @@
 <body>
   <header><h1>Flowers</h1></header>
 
+  <span id="cell-measure" aria-hidden="true"></span>
   <div id="stage"><pre id="bouquet" aria-label="A bouquet of flowers made of text characters"></pre></div>
 
   <div id="quote-wrap">
     <p id="quote"></p>
     <p id="quote-author"></p>
-    <button id="refresh" type="button">New bouquet &#10047;</button>
   </div>
 
-  <footer>made with <span class="heart">&#9829;</span> every morning</footer>
+  <footer>Siempre tuyo, Aleix</footer>
 
   <script src="quotes.js"></script>
   <script src="bouquet.js"></script>

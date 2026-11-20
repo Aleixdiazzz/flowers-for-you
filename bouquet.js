@@ -255,15 +255,16 @@
   }
 
   // ---------- rendering ----------
-  function render(scene, t, cols, rows, hearts) {
+  function render(scene, t, cols, rows, hearts, cellAspect) {
     const { pts, flowers, babies, sparkles } = scene;
     const chars = Array.from({ length: rows }, () => new Array(cols).fill(" "));
     const colors = Array.from({ length: rows }, () => new Array(cols).fill(0));
     const zbuf = Array.from({ length: rows }, () => new Array(cols).fill(-1e9));
 
-    const viewRows = rows - 2;
-    const scale = Math.max(1.0, Math.min((viewRows - 2) / 1.45, (cols - 2) / 2.7));
-    const sxScale = scale * 2.0;
+    const cellA = cellAspect || 0.5;
+    const viewRows = rows - 1;
+    const scale = Math.max(1.0, Math.min((viewRows - 2) / 1.45, (cols - 2) * cellA / 1.35));
+    const sxScale = scale / cellA;
     const cx = cols / 2;
     const cy = 1 + 0.78 * scale;
 
@@ -382,7 +383,7 @@
 
     // Message row (animated color gradient)
     const msg = CONFIG.message;
-    const mrow = rows - 2;
+    const mrow = rows - 1;
     const start = Math.max(0, Math.floor((cols - msg.length) / 2));
     const shift = Math.floor(t * 6);
     for (let i = 0; i < msg.length; i++) {
@@ -456,65 +457,56 @@
     const scene = buildScene(mulberry32(seed));
     const hearts = makeHearts();
 
-    let cols, rows, fontPx;
+    let cols, rows, fontPx, cellAspect;
+    function measureCellAspect() {
+      const m = document.getElementById("cell-measure");
+      m.style.fontFamily = getComputedStyle(pre).fontFamily;
+      m.style.fontSize = "100px";
+      m.style.lineHeight = "1";
+      m.textContent = "M".repeat(50);
+      const adv = m.getBoundingClientRect().width / 50;
+      m.textContent = "";
+      return adv / 100;
+    }
     function measure() {
-      const vw = Math.max(320, Math.min(window.innerWidth, 720));
-      const maxCols = 80;
-      cols = Math.max(28, Math.min(maxCols, Math.floor(vw / 10)));
-      rows = Math.max(22, Math.min(40, Math.round(cols * 0.78)));
-      // 0.6 em per column is the typical monospace advance width.
-      fontPx = Math.floor(((vw - 16) / cols) / 0.6);
-      if (fontPx < 7) fontPx = 7;
+      const vw = Math.max(320, window.innerWidth);
+      cellAspect = measureCellAspect();
+      const a = (cellAspect > 0.35 && cellAspect < 0.75) ? cellAspect : 0.6;
+      fontPx = Math.max(9, Math.min(18, Math.floor((vw - 12) / (72 * a))));
+      cols = Math.max(28, Math.min(84, Math.floor((vw - 12) / (a * fontPx))));
+      rows = Math.max(22, Math.min(48, Math.round(cols * a)));
       pre.style.fontSize = fontPx + "px";
       pre.style.lineHeight = "1";
     }
 
-    let last = performance.now();
-    let acc = 0;
-    const frame = 1000 / CONFIG.fps;
+    const t0 = performance.now();
+    const frameMs = 1000 / CONFIG.fps;
     let t = 0;
+    let lastStep = t0;
 
-    function loop(now) {
-      const dt = Math.min(0.1, (now - last) / 1000);
-      last = now;
-      acc += dt * 1000;
-      if (acc >= frame) {
-        acc %= frame;
-        updateHearts(hearts, dt);
-        t += dt;
-        pre.innerHTML = render(scene, t, cols, rows, hearts);
-      }
-      requestAnimationFrame(loop);
+    function step() {
+      const now = performance.now();
+      const dt = Math.min(0.1, (now - lastStep) / 1000);
+      lastStep = now;
+      t = (now - t0) / 1000;
+      updateHearts(hearts, dt);
+      pre.innerHTML = render(scene, t, cols, rows, hearts, cellAspect);
     }
 
     measure();
-    pre.innerHTML = render(scene, 0, cols, rows, hearts);
-    requestAnimationFrame(loop);
+    pre.innerHTML = render(scene, 0, cols, rows, hearts, cellAspect);
+    setInterval(step, frameMs);
 
     let resizeTimer = null;
     window.addEventListener("resize", function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
         measure();
-        pre.innerHTML = render(scene, t, cols, rows, hearts);
+        pre.innerHTML = render(scene, t, cols, rows, hearts, cellAspect);
       }, 120);
     });
 
-    // Re-roll everything without a full page reload.
-    document.getElementById("refresh").addEventListener("click", function () {
-      const q2 = LOVE_QUOTES[Math.floor(Math.random() * LOVE_QUOTES.length)];
-      quoteEl.textContent = "\u201C" + q2.text + "\u201D";
-      authorEl.textContent = q2.author ? "— " + q2.author : "";
-      seed = Math.floor(Math.random() * 1e9);
-      Object.assign(scene, buildScene(mulberry32(seed)));
-      hearts.length = 0;
-      const target = CONFIG.minHearts + Math.floor(Math.random() * (CONFIG.maxHearts - CONFIG.minHearts + 1));
-      for (let i = 0; i < target; i++) {
-        hearts.push([Math.random(), 1.0 + Math.random(), 0.03 + Math.random() * 0.05, Math.random() * 6.28, HEART_COLORS[Math.floor(Math.random() * HEART_COLORS.length)]]);
-      }
-      t = 0;
-      pre.innerHTML = render(scene, t, cols, rows, hearts);
-    });
+    // (refresh button removed; a full reload gives new flowers + quote)
   }
 
   if (typeof document !== "undefined" && document.readyState === "loading") {
