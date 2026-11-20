@@ -9,7 +9,6 @@
 
   // ---------- Configuration ----------
   const CONFIG = {
-    message: "for you ♥",   // <-- put her name here, e.g. "para ti ♥"
     fps: 22,
     spinSpeed: 0.6,
     tilt: 0.3,
@@ -31,7 +30,6 @@
   const PAPER = [101, 144, 187, 223, 230, 231];
   const RIBBON = [88, 125, 161, 197, 204, 211];
   const HEART_COLORS = [161, 197, 204, 205, 211, 218];
-  const MSG_COLORS = [161, 168, 205, 211, 218, 225, 218, 211, 205, 168];
 
   const SHADE = ".:-=+*%@";
   const PETAL_SHADE = "+*#%";
@@ -262,7 +260,7 @@
     const zbuf = Array.from({ length: rows }, () => new Array(cols).fill(-1e9));
 
     const cellA = cellAspect || 0.5;
-    const viewRows = rows - 1;
+    const viewRows = rows;
     const scale = Math.max(1.0, Math.min((viewRows - 2) / 1.45, (cols - 2) * cellA / 1.35));
     const sxScale = scale / cellA;
     const cx = cols / 2;
@@ -381,18 +379,6 @@
       else if (tw > 0.0) plot(pr[0], pr[1], pr[2], "·", 218);
     }
 
-    // Message row (animated color gradient)
-    const msg = CONFIG.message;
-    const mrow = rows - 1;
-    const start = Math.max(0, Math.floor((cols - msg.length) / 2));
-    const shift = Math.floor(t * 6);
-    for (let i = 0; i < msg.length; i++) {
-      if (start + i < cols) {
-        chars[mrow][start + i] = msg[i];
-        colors[mrow][start + i] = MSG_COLORS[(i + shift) % MSG_COLORS.length];
-      }
-    }
-
     // Build HTML string.
     let html = "";
     for (let r = 0; r < rows; r++) {
@@ -496,15 +482,6 @@
     measure();
     pre.innerHTML = render(scene, 0, cols, rows, hearts, cellAspect);
     setInterval(step, frameMs);
-
-    // Re-measure once the web font (Handjet) is actually loaded so the
-    // character-cell aspect is correct and the art isn't distorted.
-    if (document.fonts && document.fonts.load) {
-      document.fonts.load('16px "Handjet"').then(function () {
-        measure();
-        pre.innerHTML = render(scene, t, cols, rows, hearts, cellAspect);
-      });
-    }
 
     let resizeTimer = null;
     window.addEventListener("resize", function () {

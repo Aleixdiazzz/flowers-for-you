@@ -27,8 +27,6 @@ Quotes are bundled, so it works offline and never shows an off-message quote.
 
 ## Make it yours
 
-- Her name / the message under the bouquet: edit `message` at the top of
-  `bouquet.js` (default `"for you ♥"`).
 - The quotes: edit the `LOVE_QUOTES` array in `quotes.js`.
 - Colors: the palette lists at the top of `bouquet.js` (xterm-256 codes, same
   as the original).
