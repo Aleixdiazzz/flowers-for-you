@@ -21,7 +21,7 @@ Quotes are bundled, so it works offline and never shows an off-message quote.
 | `index.html` | Page + styles |
 | `bouquet.js` | The 3D bouquet generator and animation |
 | `quotes.js` | The bundled love-quote list (edit freely) |
-| `send_telegram.sh` | Sends the daily link to a Telegram chat |
+| `send_flowers.py` | Sends the daily link from your own Telegram account (userbot) |
 | `deploy/docker-compose.yml` | nginx:alpine container for the VPS deploy |
 | `test-bouquet.js` | Headless sanity test (`node test-bouquet.js`) |
 
@@ -67,40 +67,49 @@ docker compose -f docker-compose.static.yml up -d --build caddy
 
 Caddy obtains and renews TLS automatically — no certbot.
 
-## Daily Telegram message (free)
+## Daily Telegram message (free, from your own account)
 
-Telegram is used instead of WhatsApp because the Bot API is official, free, and
-needs no business verification, no template approval, and no third-party
-sign-up by the recipient. The only trade-off: the message arrives from a bot
-you name, not from your personal number.
+The message is sent from YOUR Telegram account — a small "userbot" on the VPS —
+so it arrives like a normal text from you. No bot, nothing for her to set up,
+and she has no idea it's automated: a surprise good-morning with the link.
 
 Setup (once):
 
-1. In Telegram, message [@BotFather](https://t.me/BotFather) → `/newbot`,
-   pick a name (e.g. `Flores para ti`), copy the token it gives you.
-2. Your girlfriend opens the bot (search its username) and taps **Start**. This
-   is required — a bot can't message someone who hasn't started it first.
-3. Get her chat id — run this on any machine:
+1. Get API credentials: log in at https://my.telegram.org → "API development
+   tools" → create an app. Note the `api_id` and `api_hash`.
+2. On the VPS, request a login code:
 
    ```bash
-   curl -s "https://api.telegram.org/bot<TOKEN>/getUpdates" | python3 -m json.tool
+   TG_API_ID=12345 TG_API_HASH=abc123 TG_PHONE=+34XXXXXXXXX \
+     /root/flowers-for-you/venv/bin/python /root/flowers-for-you/send_flowers.py request
    ```
 
-   Her `chat` → `id` is the number you want.
-4. Edit `send_telegram.sh` and fill in `BOT_TOKEN`, `CHAT_ID`, and `URL`.
-   Then:
+3. Telegram sends a code to your phone. Complete login (add `TG_2FA=...` if you
+   have two-step verification enabled):
 
    ```bash
-   chmod +x send_telegram.sh
-   ./send_telegram.sh          # test it — she should get a message now
+   TG_API_ID=12345 TG_API_HASH=abc123 TG_CODE=12345 \
+     /root/flowers-for-you/venv/bin/python /root/flowers-for-you/send_flowers.py login
    ```
 
-5. Schedule it. `crontab -e` and add (8:00 every morning, Madrid time —
-   change the timezone/hour to taste):
+   This saves a session file, so steps 2–3 happen only once.
+
+4. Test it (sends her a message immediately):
+
+   ```bash
+   TG_API_ID=12345 TG_API_HASH=abc123 TG_RECIPIENT=+34YYYYYYYYY \
+     /root/flowers-for-you/venv/bin/python /root/flowers-for-you/send_flowers.py
+   ```
+
+   `TG_RECIPIENT` is her phone number or `@username`.
+
+5. Schedule it. `crontab -e` and add (08:00 every morning, Madrid time):
 
    ```cron
    CRON_TZ=Europe/Madrid
-   0 8 * * * /root/flowers-for-you/send_telegram.sh
+   0 8 * * * TG_API_ID=12345 TG_API_HASH=abc123 TG_RECIPIENT=+34YYYYYYYYY /root/flowers-for-you/venv/bin/python /root/flowers-for-you/send_flowers.py
    ```
 
-That's the whole system: reload-friendly static site + one cron line.
+Honest note: automating a personal account is technically against Telegram's
+ToS. For one message a day from a real account the risk is negligible; the
+session file is stored root-only on the VPS.
