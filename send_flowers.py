@@ -1,36 +1,44 @@
 #!/usr/bin/env python3
 """Send the daily flowers link from your own Telegram account (userbot).
 
-Flow (env-driven, so it works over non-interactive SSH):
+Credentials live in /root/flowers-for-you/config.env (root-only). Ephemeral
+values (login code, 2FA password) are passed as env vars for the one-time login.
 
-  TG_API_ID=.. TG_API_HASH=.. TG_PHONE=+34... python3 send_flowers.py request
-      -> Telegram sends a login code to your phone; the code hash is saved.
-
-  TG_API_ID=.. TG_API_HASH=.. TG_CODE=12345 [TG_2FA=..] python3 send_flowers.py login
-      -> completes sign-in and saves the session (one time only).
-
-  TG_API_ID=.. TG_API_HASH=.. TG_RECIPIENT=.. python3 send_flowers.py
-      -> sends the message to her (this is what cron runs daily).
+Commands:
+  python3 send_flowers.py request   -> Telegram sends a login code to your phone
+  python3 send_flowers.py login     -> completes sign-in (needs TG_CODE, TG_2FA)
+  python3 send_flowers.py check     -> verify session + recipient, print the message (no send)
+  python3 send_flowers.py           -> send the message (what cron runs)
 """
 import os
 import sys
 import json
-import random
 import asyncio
 
 from telethon import TelegramClient
 from telethon.errors import SessionPasswordNeededError
 
+CONFIG_FILE = "/root/flowers-for-you/config.env"
 SESSION = "/root/flowers-for-you/flowers.session"
 STATE = "/root/flowers-for-you/login_state.json"
-URL = "https://flowers.example.com"
 
-GREETINGS = [
-    "Buenos días, amor ♥",
-    "Buenos días, preciosa ♥",
-    "Despierta, que hoy también hay flores para ti ♥",
-    "Para que empieces el día con una sonrisa ♥",
-]
+URL = "https://flowers.example.com"
+GREETING = "Bon dia 🖤"
+
+
+def load_config():
+    cfg = {}
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    cfg[k.strip()] = v.strip()
+    for k, v in os.environ.items():  # env overrides file (for TG_CODE / TG_2FA)
+        if k.startswith("TG_"):
+            cfg[k] = v
+    os.environ.update(cfg)
 
 
 def client():
@@ -38,6 +46,7 @@ def client():
 
 
 async def main():
+    load_config()
     cmd = sys.argv[1] if len(sys.argv) > 1 else "send"
     c = client()
     await c.connect()
@@ -56,11 +65,22 @@ async def main():
             except SessionPasswordNeededError:
                 await c.sign_in(password=os.environ.get("TG_2FA", ""))
             print("LOGGED_IN")
+        elif cmd == "check":
+            if not await c.is_user_authorized():
+                print("NOT_AUTHORIZED")
+                return
+            print("AUTHORIZED")
+            try:
+                ent = await c.get_entity(os.environ["TG_RECIPIENT"])
+                print("RECIPIENT_OK", getattr(ent, "first_name", ""))
+            except Exception as e:
+                print("RECIPIENT_UNRESOLVED", type(e).__name__, str(e)[:120])
+            print("WOULD_SEND:", repr(GREETING + "\n" + URL))
         else:
             if not await c.is_user_authorized():
                 print("NOT_AUTHORIZED")
                 return
-            text = random.choice(GREETINGS) + "\n\nTe he traído flores:\n" + URL
+            text = GREETING + "\n" + URL
             await c.send_message(os.environ["TG_RECIPIENT"], text)
             print("SENT")
     finally:

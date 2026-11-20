@@ -70,46 +70,44 @@ Caddy obtains and renews TLS automatically — no certbot.
 ## Daily Telegram message (free, from your own account)
 
 The message is sent from YOUR Telegram account — a small "userbot" on the VPS —
-so it arrives like a normal text from you. No bot, nothing for her to set up,
-and she has no idea it's automated: a surprise good-morning with the link.
+so it arrives like a normal text from you. No bot, nothing for her to set up.
+The message is two lines (edit `GREETING` in `send_flowers.py` to reword):
+
+    Bon dia 🖤
+    https://flowers.example.com
+
+Credentials live in `/root/flowers-for-you/config.env` on the VPS (root-only):
+
+    TG_API_ID=...
+    TG_API_HASH=...
+    TG_PHONE=+34...
+    TG_RECIPIENT=+34...     # her phone number or @username
 
 Setup (once):
 
-1. Get API credentials: log in at https://my.telegram.org → "API development
-   tools" → create an app. Note the `api_id` and `api_hash`.
+1. Get API credentials at https://my.telegram.org → "API development tools".
 2. On the VPS, request a login code:
 
    ```bash
-   TG_API_ID=12345 TG_API_HASH=abc123 TG_PHONE=+34XXXXXXXXX \
-     /root/flowers-for-you/venv/bin/python /root/flowers-for-you/send_flowers.py request
+   cd /root/flowers-for-you && venv/bin/python send_flowers.py request
    ```
 
-3. Telegram sends a code to your phone. Complete login (add `TG_2FA=...` if you
-   have two-step verification enabled):
+3. Telegram sends a code to your phone; complete login (add `TG_2FA=...` if
+   two-step verification is on):
 
    ```bash
-   TG_API_ID=12345 TG_API_HASH=abc123 TG_CODE=12345 \
-     /root/flowers-for-you/venv/bin/python /root/flowers-for-you/send_flowers.py login
+   TG_CODE=12345 venv/bin/python send_flowers.py login
    ```
 
-   This saves a session file, so steps 2–3 happen only once.
-
-4. Test it (sends her a message immediately):
+4. Verify without sending anything:
 
    ```bash
-   TG_API_ID=12345 TG_API_HASH=abc123 TG_RECIPIENT=+34YYYYYYYYY \
-     /root/flowers-for-you/venv/bin/python /root/flowers-for-you/send_flowers.py
+   venv/bin/python send_flowers.py check
    ```
 
-   `TG_RECIPIENT` is her phone number or `@username`.
-
-5. Schedule it. `crontab -e` and add (08:00 every morning, Madrid time):
-
-   ```cron
-   CRON_TZ=Europe/Madrid
-   0 8 * * * TG_API_ID=12345 TG_API_HASH=abc123 TG_RECIPIENT=+34YYYYYYYYY /root/flowers-for-you/venv/bin/python /root/flowers-for-you/send_flowers.py
-   ```
+5. Cron (already installed): `0 8 * * *` with `CRON_TZ=Europe/Madrid`, running
+   `venv/bin/python send_flowers.py >> cron.log 2>&1`.
 
 Honest note: automating a personal account is technically against Telegram's
 ToS. For one message a day from a real account the risk is negligible; the
-session file is stored root-only on the VPS.
+session file is root-only on the VPS.
