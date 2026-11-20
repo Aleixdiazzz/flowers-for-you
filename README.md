@@ -2,9 +2,9 @@
 
 A tiny web app that shows a spinning 3D ASCII flower bouquet (daisies, tulips,
 paper wrap, ribbon, baby's breath, sparkles, floating hearts) with a love quote
-underneath. Every page load — or tap of the button — produces a new arrangement
-and a new quote. Built for a mobile browser (Safari), so the art auto-scales to
-fit the screen with no horizontal scrolling.
+underneath. Every page load produces a new arrangement and a new quote. Built
+for a mobile browser (Safari), so the art auto-scales to fit the screen with no
+horizontal scrolling.
 
 Ported from the terminal animation in
 [alishsharma17/Ascii-Flower-Bouquet-](https://github.com/alishsharma17/Ascii-Flower-Bouquet-)
@@ -22,7 +22,7 @@ Quotes are bundled, so it works offline and never shows an off-message quote.
 | `bouquet.js` | The 3D bouquet generator and animation |
 | `quotes.js` | The bundled love-quote list (edit freely) |
 | `send_telegram.sh` | Sends the daily link to a Telegram chat |
-| `deploy/nginx.conf` | Example nginx server block |
+| `deploy/docker-compose.yml` | nginx:alpine container for the VPS deploy |
 | `test-bouquet.js` | Headless sanity test (`node test-bouquet.js`) |
 
 ## Make it yours
@@ -43,34 +43,29 @@ python3 -m http.server 8000
 
 ## Deploy to your VPS (free)
 
-Assumes a Linux VPS with nginx. Everything below is $0.
+Live at https://flowers.example.com on the Hetzner box `SERVER_IP`
+(Ubuntu 24.04, Docker), behind the existing Caddy reverse proxy. $0.
 
-1. Put the files on the box:
+Layout on the server:
 
-   ```bash
-   git clone https://github.com/Aleixdiazzz/flowers-for-you.git
-   sudo mkdir -p /var/www/flowers-for-you
-   sudo cp -r flowers-for-you/* /var/www/flowers-for-you/
-   ```
+- `/root/flowers-for-you/site/` — the static files (`index.html`, `bouquet.js`, `quotes.js`).
+- `/root/flowers-for-you/docker-compose.yml` — runs `nginx:alpine` (container `flowers_nginx`) on `xpose-network`.
+- Caddy block `flowers.example.com` in `/root/astro-portfolio/XposePortfolio/Caddyfile.static`.
 
-2. nginx (static site):
+Update the site after pushing changes:
 
-   ```bash
-   sudo cp flowers-for-you/deploy/nginx.conf /etc/nginx/sites-available/flowers-for-you
-   sudo ln -s /etc/nginx/sites-available/flowers-for-you /etc/nginx/sites-enabled/
-   # edit the file to set your server_name (domain or _ for the bare IP)
-   sudo nginx -t && sudo systemctl reload nginx
-   ```
+```bash
+scp index.html bouquet.js quotes.js root@SERVER_IP:/root/flowers-for-you/site/
+```
 
-3. HTTPS with a free Let's Encrypt cert (if you have a domain):
+To change the Caddy config, append a block to `Caddyfile.static` then rebuild:
 
-   ```bash
-   sudo apt install -y certbot python3-certbot-nginx
-   sudo certbot --nginx -d your-domain.com
-   ```
+```bash
+cd ~/astro-portfolio/XposePortfolio
+docker compose -f docker-compose.static.yml up -d --build caddy
+```
 
-   With a bare IP you'll serve over plain HTTP (fine, but a domain + TLS is
-   nicer for a gift).
+Caddy obtains and renews TLS automatically — no certbot.
 
 ## Daily Telegram message (free)
 
@@ -105,7 +100,7 @@ Setup (once):
 
    ```cron
    CRON_TZ=Europe/Madrid
-   0 8 * * * /home/YOUR_USER/send_telegram.sh
+   0 8 * * * /root/flowers-for-you/send_telegram.sh
    ```
 
 That's the whole system: reload-friendly static site + one cron line.

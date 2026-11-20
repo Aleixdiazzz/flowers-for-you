@@ -1,0 +1,13 @@
+services:
+  flowers:
+    image: nginx:alpine
+    container_name: flowers_nginx
+    restart: unless-stopped
+    networks:
+      - xpose-network
+    volumes:
+      - /root/flowers-for-you/site:/usr/share/nginx/html:ro
+
+networks:
+  xpose-network:
+    external: true

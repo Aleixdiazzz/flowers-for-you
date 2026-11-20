@@ -7,7 +7,7 @@ set -euo pipefail
 # ---- configure these (see README.md) ----
 BOT_TOKEN="REPLACE_WITH_BOT_TOKEN"   # from @BotFather
 CHAT_ID="REPLACE_WITH_CHAT_ID"       # her Telegram chat id
-URL="https://YOUR-DOMAIN-OR-IP"      # where the app is hosted
+URL="https://flowers.example.com"   # where the app is hosted
 # ------------------------------------------
 
 GREETINGS=(
