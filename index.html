@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#120b16" />
+  <meta name="description" content="A fresh bouquet, picked just for you." />
+  <meta property="og:title" content="Flowers for you ♥" />
+  <meta property="og:description" content="A fresh bouquet, picked just for you." />
+  <meta property="og:type" content="website" />
+  <title>Flowers for you</title>
+  <style>
+    :root {
+      --bg: #120b16;
+      --bg-2: #1c1226;
+      --ink: #f6e7f4;
+      --ink-soft: #cbb3d1;
+      --accent: #e56ba3;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, var(--bg-2) 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100%;
+      padding: max(16px, env(safe-area-inset-top)) 8px max(20px, env(safe-area-inset-bottom));
+      overflow-x: hidden;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    header h1 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    #stage {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      justify-content: center;
+      padding: 10px 4px 4px;
+    }
+    pre#bouquet {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      white-space: pre;
+      line-height: 1;
+      letter-spacing: 0;
+      margin: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      overflow: hidden;
+    }
+    #quote-wrap {
+      width: 100%;
+      max-width: 620px;
+      text-align: center;
+      padding: 22px 20px 10px;
+    }
+    #quote {
+      font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+      font-style: italic;
+      font-size: 19px;
+      line-height: 1.45;
+      color: var(--ink);
+      text-wrap: balance;
+    }
+    #quote-author {
+      margin-top: 12px;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      color: var(--ink-soft);
+    }
+    button#refresh {
+      margin: 14px 0 6px;
+      padding: 11px 26px;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      color: #2a1020;
+      background: linear-gradient(135deg, #f0a6c8, #e56ba3);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 6px 22px rgba(229, 107, 163, 0.35);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button#refresh:active { transform: scale(0.96); box-shadow: 0 3px 12px rgba(229, 107, 163, 0.3); }
+    footer {
+      margin-top: auto;
+      padding-top: 18px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      opacity: 0.7;
+    }
+    footer .heart { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <header><h1>Flowers</h1></header>
+
+  <div id="stage"><pre id="bouquet" aria-label="A bouquet of flowers made of text characters"></pre></div>
+
+  <div id="quote-wrap">
+    <p id="quote"></p>
+    <p id="quote-author"></p>
+    <button id="refresh" type="button">New bouquet &#10047;</button>
+  </div>
+
+  <footer>made with <span class="heart">&#9829;</span> every morning</footer>
+
+  <script src="quotes.js"></script>
+  <script src="bouquet.js"></script>
+</body>
+</html>
